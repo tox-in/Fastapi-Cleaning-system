@@ -25,9 +25,6 @@ def list_groups(
     specialization: Optional[SpecializationType] = None,
     db: Session = Depends(get_db)
 ):
-    """
-    List all groups with optional filtering and pagination.
-    """
     query = db.query(Group)
     if specialization:
         query = query.filter(Group.specialization == specialization)
@@ -38,12 +35,8 @@ def list_groups(
 async def get_all_groups(
     db: Session = Depends(get_db)
 ):
-    """
-    Retrieve all groups
-    """
     groups = db.query(Group).all()
     
-    # Convert the groups to a format that matches the schema
     response_groups = []
     for group in groups:
         group_dict = {
@@ -63,9 +56,6 @@ async def get_group(
     group_id: int = Path(..., gt=0),
     db: Session = Depends(get_db)
 ):
-    """
-    Get detailed information about a specific group.
-    """
     group = db.query(Group).filter(Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -76,9 +66,6 @@ def create_group(
     group: GroupCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Create a new group with validation checks.
-    """
     try:
         if db.query(Group).filter(Group.name == group.name).first():
             raise HTTPException(
@@ -140,9 +127,6 @@ def update_group(
     group: GroupCreate = None,
     db: Session = Depends(get_db)
 ):
-    """
-    Update an existing group with validation checks.
-    """
     existing_group = db.query(Group).filter(Group.id == group_id).first()
     if not existing_group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -204,9 +188,6 @@ def delete_group(
     group_id: int = Path(..., gt=0),
     db: Session = Depends(get_db)
 ):
-    """
-    Delete a group and return success message.
-    """
     group = db.query(Group).filter(Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -225,8 +206,5 @@ def delete_group(
 async def get_all_groups(
     db: Session = Depends(get_db)
 ):
-    """
-    Retrieve all groups
-    """
     groups = db.query(Group).all()
     return groups

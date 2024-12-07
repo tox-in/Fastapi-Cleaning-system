@@ -27,6 +27,9 @@ def check_user_role(user: User, allowed_roles: List[str]):
             status_code=403,
             detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
         )
+        
+        
+"""Get list of tasks based on user role and filters"""
 
 @router.get("/list", response_model=List[TaskListResponse])
 async def task_list(
@@ -36,9 +39,6 @@ async def task_list(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get list of tasks based on user role and filters
-    """
     query = db.query(Reservation)
 
     if current_user.role == RoleType.CHIEF:
@@ -65,6 +65,9 @@ async def task_list(
     
     return tasks
 
+
+"""Update task status (Chief only)"""
+
 @router.put("/{task_id}/status", response_model=TaskListResponse)
 async def update_task_status(
     task_id: int = Path(..., gt=0),
@@ -72,9 +75,6 @@ async def update_task_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Update task status (Chief only)
-    """
     check_user_role(current_user, [RoleType.CHIEF])
     
     task = (
@@ -97,14 +97,14 @@ async def update_task_status(
     db.refresh(task)
     return task
 
+
+"""Get task statistics based on user role"""
+
 @router.get("/statistics")
 async def task_statistics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get task statistics based on user role
-    """
     check_user_role(current_user, [RoleType.CHIEF, RoleType.ADMIN])
     
     query = db.query(Reservation)
@@ -126,6 +126,9 @@ async def task_statistics(
         "in_progress_tasks": in_progress_tasks,
         "completion_rate": round(completion_rate, 2)
     }
+    
+
+"""Get calendar view of tasks"""
 
 @router.get("/calendar")
 async def task_calendar(
@@ -134,9 +137,6 @@ async def task_calendar(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get calendar view of tasks
-    """
     query = db.query(Reservation)
     
     if current_user.role == RoleType.CHIEF:
@@ -165,14 +165,15 @@ async def task_calendar(
     
     return calendar_data
 
+
+
+"""Get workload statistics for groups (Admin/Chief only)"""
+
 @router.get("/workload")
 async def group_workload(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get workload statistics for groups (Admin/Chief only)
-    """
     check_user_role(current_user, [RoleType.ADMIN, RoleType.CHIEF])
     
     query = (

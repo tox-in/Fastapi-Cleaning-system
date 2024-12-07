@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract, select
 from typing import List, Optional, Dict, Any
+from fastapi import Query
 import logging
 from datetime import date, datetime, timedelta
 from app.database import get_db
@@ -30,13 +31,16 @@ def check_user_role(user: User, allowed_roles: List[str]):
             detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
         )
 
+
+
+"""Create a new reservation for a client"""
+
 @router.post("/create", response_model=ReservationResponse)
 async def create_reservation(
     reservation: ReservationCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new reservation for a client"""
     check_user_role(current_user, [RoleType.CLIENT])
 
     assigned_group = (
@@ -68,12 +72,14 @@ async def create_reservation(
     db.refresh(new_reservation)
     return new_reservation
 
+
+"""Get all reservations for the current client"""
+
 @router.get("/dashboard/client", response_model=List[ReservationResponse])
 async def client_dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all reservations for the current client"""
     check_user_role(current_user, [RoleType.CLIENT])
     
     reservations = (
@@ -84,13 +90,15 @@ async def client_dashboard(
     )
     return reservations
 
+
+"""Get admin dashboard with statistics"""
+
 @router.get("/dashboard/admin", response_class=HTMLResponse)
 async def admin_dashboard(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get admin dashboard with statistics"""
     check_user_role(current_user, [RoleType.ADMIN])
 
     total_groups = db.query(func.count(Group.id)).scalar()
@@ -134,12 +142,15 @@ async def admin_dashboard(
 
     return templates.TemplateResponse("dashboard/admin_dashboard.html", context)
 
+
+
+"""Get all reservations assigned to the chief's group"""
+
 @router.get("/dashboard/chief")
 async def chief_dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all reservations assigned to the chief's group"""
     check_user_role(current_user, [RoleType.CHIEF])
     
     reservations = (
@@ -151,13 +162,16 @@ async def chief_dashboard(
     )
     return reservations
 
+
+
+"""Get detailed information about a specific reservation"""
+
 @router.get("/{reservation_id}", response_model=ReservationResponse)
 async def reservation_detail(
     reservation_id: int = Path(..., gt=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get detailed information about a specific reservation"""
     reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
     if not reservation:
         raise HTTPException(status_code=404, detail="Reservation not found")
@@ -168,13 +182,15 @@ async def reservation_detail(
     
     return reservation
 
+
+"""Approve a reservation (admin only)"""
+
 @router.put("/{reservation_id}/approve")
 async def approve_reservation(
     reservation_id: int = Path(..., gt=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Approve a reservation (admin only)"""
     check_user_role(current_user, [RoleType.ADMIN])
     
     reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
@@ -185,6 +201,10 @@ async def approve_reservation(
     db.commit()
     return {"message": "Reservation approved successfully"}
 
+
+
+"""Rate a group for a completed reservation"""
+
 @router.put("/{reservation_id}/rate")
 async def rate_group(
     reservation_id: int,
@@ -192,7 +212,6 @@ async def rate_group(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Rate a group for a completed reservation"""
     check_user_role(current_user, [RoleType.CLIENT])
     
     reservation = (
@@ -213,15 +232,14 @@ async def rate_group(
     
     return {"message": "Rating submitted successfully"}
 
-from fastapi import Query
+
+
+"""Retrieve all reservations without authentication, limited to 50 rows at a time."""
 
 @router.get("", response_model=List[ReservationResponse])
 async def get_all_reservations(
     db: Session = Depends(get_db),
 ):
-    """
-    Retrieve all reservations without authentication, limited to 50 rows at a time.
-    """
     stmt = (
         select(
             Reservation.id,
@@ -266,6 +284,9 @@ async def get_all_reservations(
         raise HTTPException(status_code=500, detail="Error fetching reservations")
 
 
+
+"""Get comprehensive statistics about reservations"""
+
 @router.get("/statistics", response_model=Dict[str, Any])
 async def get_reservation_statistics(
     start_date: Optional[date] = None,
@@ -273,9 +294,6 @@ async def get_reservation_statistics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get comprehensive statistics about reservations
-    """
     query = db.query(Reservation)
     
     if start_date:

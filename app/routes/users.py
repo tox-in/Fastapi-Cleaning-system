@@ -34,6 +34,8 @@ def verify_password(plain_password: str, hashed_password: str):
 def get_password_hash(password: str):
     return pwd_context.hash(password)
 
+"""Sign up a user"""
+
 @router.post("/users/", response_model=schemas.UserBase)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
@@ -51,6 +53,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
+"""Login function"""
 
 @router.post("/token")
 def login_for_access_token(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
@@ -64,6 +67,7 @@ def login_for_access_token(form_data: schemas.UserLogin, db: Session = Depends(g
         data={"sub": db_user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/logout")
 def logout():
@@ -82,6 +86,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
 
 @router.get("/users/me", response_model=schemas.UserBase)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
