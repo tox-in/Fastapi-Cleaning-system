@@ -3,8 +3,8 @@ import requests
 import pandas as pd
 from .tabulate import create_html_table_with_borders
 
+"""delete the file(csv) data if it exists and then write data to it."""
 def write_to_csv(file_path, data_frame, delimiter=','):
-    """Helper function to delete the file if it exists and then write data to it."""
     if os.path.exists(file_path):
         os.remove(file_path)
         print(f"Cleared existing data in '{file_path}'")
@@ -12,32 +12,29 @@ def write_to_csv(file_path, data_frame, delimiter=','):
     print(f"Data written to '{file_path}' in tabulated format")
 
 try:
-    # Configure base URL and error handling
     BASE_URL = 'http://127.0.0.1:8001'
 
-    # Fetch the groups data
     print("Fetching groups data...")
     groups_api = requests.get(f'{BASE_URL}/groups/all')
     groups_api.raise_for_status()
     groups_api_data = groups_api.json()
-    print(f"Successfully fetched {len(groups_api_data)} groups")
+    # print(f"Successfully fetched {len(groups_api_data)} groups")
 
-    # Fetch the reservations data
     print("Fetching reservations data...")
     reservations_api = requests.get(f'{BASE_URL}/reservations')
     reservations_api.raise_for_status()
     reservations_api_data = reservations_api.json()
-    print(f"Successfully fetched {len(reservations_api_data)} reservations")
+    # print(f"Successfully fetched {len(reservations_api_data)} reservations")
 
-    # Convert the groups data into a pandas DataFrame
+    # Convert the data into pandas DataFrames
+    
     groups_df = pd.DataFrame(groups_api_data)
     write_to_csv('groups_data.csv', groups_df)
 
-    # Convert the reservations data into a pandas DataFrame
     reservations_df = pd.DataFrame(reservations_api_data)
     write_to_csv('reservations_data.csv', reservations_df)
-
-    # Perform different types of merges between groups and reservations
+    
+    
     print("Performing data merges...")
 
     # Inner join - only matching records between both DataFrames
@@ -65,9 +62,9 @@ try:
     write_to_csv('left_join.csv', left_join_df)
 
     # Cross join - cartesian product of both DataFrames
-    # Uncomment the following lines to perform and save cross join
-    # cross_join_df = pd.merge(reservations_df.assign(key=1), groups_df.assign(key=1), on='key').drop('key', axis=1)
-    # write_to_csv('cross_join.csv', cross_join_df)
+    # This should take much longer for large datasets and also large memory is to be consumed
+    cross_join_df = pd.merge(reservations_df.assign(key=1), groups_df.assign(key=1), on='key').drop('key', axis=1)
+    write_to_csv('cross_join.csv', cross_join_df)
 
     # Analyze null values in the merged DataFrames
     null_values_df = pd.DataFrame({

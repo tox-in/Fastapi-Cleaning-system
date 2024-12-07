@@ -1,7 +1,8 @@
 import pandas as pd
 
+"""Reads CSV data and outputs it as an HTML table with borders."""
+
 def create_html_table_with_borders(file_path):
-    """Reads CSV data and outputs it as an HTML table with borders."""
     try:
         # Read the CSV file into a DataFrame
         df = pd.read_csv(file_path)
@@ -22,5 +23,5 @@ def create_html_table_with_borders(file_path):
     except Exception as e:
         print(f"An error occurred while creating the HTML table: {e}")
 
-# Example function call (Replace with your actual CSV file path)
-create_html_table_with_borders('priority_count.csv')
+# # Example function call
+# create_html_table_with_borders('priority_count.csv')
